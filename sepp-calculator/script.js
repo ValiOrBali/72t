@@ -5,45 +5,48 @@ function calculatePMT(rate, nper, pv) {
     return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 }
 
-function updateDestinationDefaults() {
+function updateDefaults() {
     const country = document.getElementById('country').value;
     const defaults = {
-        "India": { sym: "₹", exch: 84.00, deval: 2 },
-        "Singapore": { sym: "S$", exch: 1.34, deval: 0 },
-        "Dubai": { sym: "AED", exch: 3.67, deval: 0 },
-        "UK": { sym: "£", exch: 0.79, deval: -1 }
+        "India": { sym: "₹", exch: 84.00, deval: 2, growth: 7 },
+        "Singapore": { sym: "S$", exch: 60, deval: 0, growth: 6 },
+        "Dubai": { sym: "AED", exch: 3, deval: 0, growth: 5 },
+        "UK": { sym: "£", exch: 1, deval: 0, growth: 6 }
     };
     const data = defaults[country];
     if (data) {
         document.getElementById('currency-symbol').value = data.sym;
         document.getElementById('base-exchange').value = data.exch;
         document.getElementById('devaluation-rate').value = data.deval;
+        document.getElementById('growth-rate').value = data.growth;
     }
-    runCalculations();
 }
 
-function toggleStateInputs() {
-    const status = document.getElementById('status').value;
-    const groups = [document.getElementById('state-name-group'), document.getElementById('state-tax-group')];
-    groups.forEach(g => status === 'nra' ? g.classList.add('disabled') : g.classList.remove('disabled'));
-}
+function runCalculations(e) {
+    if (e) e.preventDefault();
+    
+    const form = document.getElementById('calc-form');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
 
-function runCalculations() {
-    const balance = Math.round(parseFloat(document.getElementById('balance').value)) || 0;
-    const startAge = parseInt(document.getElementById('age').value) || 40;
+    const balance = Math.round(parseFloat(document.getElementById('balance').value));
+    const startAge = parseInt(document.getElementById('age').value);
+    const growthInput = parseFloat(document.getElementById('growth-rate').value) / 100;
+    const exchBase = parseFloat(document.getElementById('base-exchange').value);
+    const deval = parseFloat(document.getElementById('devaluation-rate').value) / 100;
     const status = document.getElementById('status').value;
     const country = document.getElementById('country').value;
-    const growthInput = parseFloat(document.getElementById('growth-rate').value) / 100 || 0;
-    const stateTaxRate = (status === 'citizen') ? (parseFloat(document.getElementById('state-tax').value) / 100 || 0) : 0;
     const sym = document.getElementById('currency-symbol').value;
-    const exchBase = parseFloat(document.getElementById('base-exchange').value) || 1;
-    const deval = parseFloat(document.getElementById('devaluation-rate').value) / 100 || 0;
+    const stateTaxRate = (status === 'citizen') ? (parseFloat(document.getElementById('state-tax').value) / 100 || 0) : 0;
+
+    document.getElementById('results-area').style.display = 'block';
 
     const treatyRate = { "India": 0.15, "Singapore": 0.30, "Dubai": 0.30, "UK": 0.00 }[country] || 0.30;
     const lumpPenalty = Math.round(balance * 0.1);
     const lumpTax = Math.round(balance * (treatyRate + stateTaxRate));
-    const lumpNet = balance - lumpPenalty - lumpTax;
-
+    
     const nper = LIFE_TABLE[startAge] || (82.0 - startAge);
     const annualSEPP = Math.round(calculatePMT(0.05, nper, balance));
     
@@ -64,11 +67,11 @@ function runCalculations() {
         totalWithdrawn += annualSEPP;
 
         let localStatus = "Resident";
-        let statusDesc = "Standard Tax Residency.";
+        let statusDesc = "Standard Residency.";
         if (country === "India") {
             const isRNOR = (age - startAge < 3);
             localStatus = isRNOR ? "RNOR" : "ROR";
-            statusDesc = isRNOR ? "Resident but Not Ordinarily Resident: Generally exempt from local tax on foreign income." : "Resident Ordinarily Resident: Worldwide income is taxable locally.";
+            statusDesc = isRNOR ? "RNOR: Foreign income usually exempt from local tax." : "ROR: Worldwide income taxable locally.";
         }
 
         const currentExch = exchBase * Math.pow(1 + deval, age - startAge);
@@ -87,11 +90,14 @@ function runCalculations() {
     }
 
     const seppNet = totalWithdrawn - totalTaxesPaid;
+    const lumpNet = balance - lumpPenalty - lumpTax;
+
     document.getElementById('sepp-amount').innerText = "$" + annualSEPP.toLocaleString();
     document.getElementById('total-sepp-withdrawn').innerText = "$" + totalWithdrawn.toLocaleString();
     document.getElementById('total-sepp-taxes').innerText = "$" + totalTaxesPaid.toLocaleString();
     document.getElementById('net-sepp-withdrawn').innerText = "$" + seppNet.toLocaleString();
     document.getElementById('final-sepp-balance').innerText = "$" + currentBalance.toLocaleString();
+    
     document.getElementById('lump-sum-penalty').innerText = "-$" + lumpPenalty.toLocaleString();
     document.getElementById('lump-sum-taxes').innerText = "-$" + lumpTax.toLocaleString();
     document.getElementById('lump-sum-final-net').innerText = "$" + lumpNet.toLocaleString();
@@ -105,9 +111,11 @@ function runCalculations() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('status').addEventListener('change', () => { toggleStateInputs(); runCalculations(); });
-    document.getElementById('country').addEventListener('change', updateDestinationDefaults);
-    document.getElementById('btn-calculate').addEventListener('click', runCalculations);
-    toggleStateInputs();
-    runCalculations();
+    document.getElementById('calc-form').addEventListener('submit', runCalculations);
+    document.getElementById('country').addEventListener('change', updateDefaults);
+    document.getElementById('status').addEventListener('change', () => {
+        const status = document.getElementById('status').value;
+        const groups = [document.getElementById('state-name-group'), document.getElementById('state-tax-group')];
+        groups.forEach(g => status === 'nra' ? g.classList.add('disabled') : g.classList.remove('disabled'));
+    });
 });

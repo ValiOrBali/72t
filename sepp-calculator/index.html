@@ -22,52 +22,68 @@
         <div class="dashboard">
             <aside class="sidebar">
                 <section class="card">
-                    <h2>Core Financials</h2>
-                    <div class="input-group">
-                        <label for="balance">401(k) Balance ($)</label>
-                        <input type="number" id="balance"  placeholder="500000">
-                    </div>
-                    <div class="input-group">
-                        <label for="age">Current Age</label>
-                        <input type="number" id="age" placeholder="40">
-                    </div>
-                    <div class="input-group">
-                        <label for="status">Residency Status</label>
-                        <select id="status">
-                            <option value="citizen">US Citizen / Resident</option>
-                            <option value="nra" selected>Non-Resident Alien (NRA)</option>
-                        </select>
-                    </div>
-                    <div class="input-group" id="state-name-group">
-                        <label for="state-name">Home State</label>
-                        <input type="text" id="state-name" placeholder="e.g. California">
-                    </div>
-                    <div class="input-group" id="state-tax-group">
-                        <label for="state-tax" id="state-tax-label">State Tax Rate (%)</label>
-                        <input type="number" id="state-tax" value="5" step="0.1">
-                    </div>
-                    <div class="input-group">
-                        <label for="country">Destination</label>
-                        <select id="country">
-                            <option value="India">India</option>
-                            <option value="Singapore">Singapore</option>
-                            <option value="Dubai">Dubai</option>
-                            <option value="UK">United Kingdom</option>
-                        </select>
-                    </div>
+                    <form id="calc-form">
+                        <h2>Core Financials</h2>
+                        <div class="input-group">
+                            <label for="balance">401(k) Balance ($) <span class="req">*</span></label>
+                            <input type="number" id="balance" min="0" required placeholder="e.g. 1000000">
+                        </div>
+                        <div class="input-group">
+                            <label for="age">Current Age <span class="req">*</span></label>
+                            <input type="number" id="age" min="0" required placeholder="e.g. 40">
+                        </div>
+                        <div class="input-group">
+                            <label for="status">Residency Status <span class="req">*</span></label>
+                            <select id="status" required>
+                                <option value="" disabled selected>Select status</option>
+                                <option value="citizen">US Citizen / Resident</option>
+                                <option value="nra">Non-Resident Alien (NRA)</option>
+                            </select>
+                        </div>
+                        <div class="input-group" id="state-name-group">
+                            <label for="state-name">Home State</label>
+                            <input type="text" id="state-name" placeholder="e.g. California">
+                        </div>
+                        <div class="input-group" id="state-tax-group">
+                            <label for="state-tax">State Tax Rate (%)</label>
+                            <input type="number" id="state-tax" min="0" step="0.1" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="country">Destination <span class="req">*</span></label>
+                            <select id="country" required>
+                                <option value="" disabled selected>Select country</option>
+                                <option value="India">India</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Dubai">Dubai</option>
+                                <option value="UK">United Kingdom</option>
+                            </select>
+                        </div>
 
-                    <h2 style="font-size: 1rem; margin-top: 20px;">Assumptions</h2>
-                    <div class="input-grid">
-                        <div class="input-group"><label>Growth %</label><input type="number" id="growth-rate" value="7"></div>
-                        <div class="input-group"><label>Currency</label><input type="text" id="currency-symbol" value="₹"></div>
-                        <div class="input-group"><label>Exchangerate</label><input type="number" id="base-exchange" value="84.00"></div>
-                        <div class="input-group"><label>Devalauationrate %</label><input type="number" id="devaluation-rate" value="2"></div>
-                    </div>
-                    <button type="button" id="btn-calculate" class="btn-calculate">Update Everything</button>
+                        <h2 style="font-size: 1rem; margin-top: 20px;">Assumptions</h2>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Growth % <span class="req">*</span></label>
+                                <input type="number" id="growth-rate" min="0" required placeholder="7">
+                            </div>
+                            <div class="input-group">
+                                <label>Currency <span class="req">*</span></label>
+                                <input type="text" id="currency-symbol" required placeholder="₹">
+                            </div>
+                            <div class="input-group">
+                                <label>Exchange rate <span class="req">*</span></label>
+                                <input type="number" id="base-exchange" min="0" required placeholder="84.00">
+                            </div>
+                            <div class="input-group">
+                                <label>Devaluation rate % <span class="req">*</span></label>
+                                <input type="number" id="devaluation-rate" min="0" required placeholder="2">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-calculate">Update Everything</button>
+                    </form>
                 </section>
             </aside>
 
-            <section class="main-content">
+            <section class="main-content" id="results-area" style="display: none;">
                 <div class="results-grid">
                     <div class="card result-card highlight">
                         <h3>Annual SEPP Payment</h3>
@@ -95,18 +111,12 @@
                     <h2>Wealth Comparison: Spendable Cash</h2>
                     <div class="comparison-container">
                         <div class="bar-group">
-                            <div class="bar-label">Lump Sum Net (Immediate Cash Out)</div>
-                            <div class="bar-wrapper">
-                                <div id="bar-lump" class="bar danger-bg" style="width: 0%"></div>
-                                <span id="bar-lump-val" class="bar-value">$0</span>
-                            </div>
+                            <div class="bar-label">Lump Sum Net</div>
+                            <div class="bar-wrapper"><div id="bar-lump" class="bar danger-bg" style="width: 0%"></div><span id="bar-lump-val" class="bar-value">$0</span></div>
                         </div>
                         <div class="bar-group">
-                            <div class="bar-label">SEPP Net Withdrawn (Total Received over Plan)</div>
-                            <div class="bar-wrapper">
-                                <div id="bar-sepp" class="bar success-bg" style="width: 0%"></div>
-                                <span id="bar-sepp-val" class="bar-value">$0</span>
-                            </div>
+                            <div class="bar-label">SEPP Net Withdrawn</div>
+                            <div class="bar-wrapper"><div id="bar-sepp" class="bar success-bg" style="width: 0%"></div><span id="bar-sepp-val" class="bar-value">$0</span></div>
                         </div>
                     </div>
                 </div>
@@ -119,7 +129,8 @@
                                 <tr>
                                     <th>Year</th><th>Age</th><th>Status</th><th>Start Balance</th><th>Growth</th>
                                     <th>SEPP ($)</th><th>Tax %</th><th>Tax ($)</th><th>End Balance</th><th>Net (Mo)</th>
-                                    <th></th> </tr>
+                                    <th></th>
+                                </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
