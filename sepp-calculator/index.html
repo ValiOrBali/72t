@@ -3,71 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>72(t) SEPP Comparison Tool</title>
-    
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-    
+    <title>72(t) Adventure Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>72(t) SEPP vs. Lump Sum</h1>
-            <p>Compare early retirement withdrawal strategies and tax impacts.</p>
+            <h1>72(t) SEPP Adventure Engine</h1>
+            <p>Compare retirement paths and forecast your global journey.</p>
         </header>
 
-        <main class="dashboard">
-            <section class="card input-card">
-                <h2>Financial Details</h2>
-                <form id="calc-form">
+        <div class="dashboard">
+            <aside class="sidebar">
+                <section class="card">
+                    <h2>Core Financials</h2>
                     <div class="input-group">
-                        <label for="balance">401(k) / IRA Balance ($)</label>
-                        <input type="number" id="balance" placeholder="e.g. 600000" required>
+                        <label for="balance">401(k) Balance ($)</label>
+                        <input type="number" id="balance" placeholder="500000">
                     </div>
                     <div class="input-group">
                         <label for="age">Current Age</label>
-                        <input type="number" id="age" placeholder="e.g. 45" required>
+                        <input type="number" id="age" placeholder="40">
                     </div>
                     <div class="input-group">
-                        <label for="citizen">Residency Status</label>
-                        <select id="citizen">
+                        <label for="status">US Residency Status</label>
+                        <select id="status">
                             <option value="citizen">US Citizen / Resident</option>
-                            <option value="nra">Non-Resident Alien (NRA)</option>
+                            <option value="nra" selected>Non-Resident Alien (NRA)</option>
                         </select>
+                    </div>
+                    <div class="input-group" id="state-name-group">
+                        <label for="state-name">Home State</label>
+                        <input type="text" id="state-name" placeholder="e.g. California">
+                    </div>
+                    <div class="input-group" id="state-tax-group">
+                        <label for="state-tax">State Tax Rate (%)</label>
+                        <input type="number" id="state-tax" value="5" step="0.1">
                     </div>
                     <div class="input-group">
-                        <label for="country">Destination Country</label>
+                        <label for="country">Destination</label>
                         <select id="country">
-                            <option value="India">India (15% Treaty)</option>
-                            <option value="Singapore">Singapore (30% Default)</option>
-                            <option value="Dubai">Dubai (30% Default)</option>
-                            <option value="UK">United Kingdom (0% Treaty)</option>
+                            <option value="India">India</option>
+                            <option value="Singapore">Singapore</option>
+                            <option value="Dubai">Dubai</option>
+                            <option value="UK">United Kingdom</option>
                         </select>
                     </div>
-                    <button type="button" class="btn-calculate">Calculate Comparison</button>
-                </form>
-            </section>
 
-            <section class="results-grid">
-                <div class="card result-card highlight">
-                    <h3>Annual SEPP Payment</h3>
-                    <p id="sepp-amount" class="value">$0.00</p>
-                    <span class="label">Tax-Penalty Free</span>
+                    <h2 style="font-size: 1rem; margin-top: 20px;">Adventure Assumptions</h2>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Growth %</label><input type="number" id="growth-rate" value="7"></div>
+                        <div class="input-group"><label>Currency</label><input type="text" id="currency-symbol" value="₹"></div>
+                        <div class="input-group"><label>Exchangerate</label><input type="number" id="base-exchange" value="84.00"></div>
+                        <div class="input-group"><label>Devaluation %</label><input type="number" id="devaluation-rate" value="2"></div>
+                    </div>
+                    <button type="button" id="btn-calculate" class="btn-calculate">Update Everything</button>
+                </section>
+            </aside>
+
+            <section class="main-content">
+                <div class="results-grid">
+                    <div class="card result-card highlight">
+                        <h3>Annual SEPP Payment</h3>
+                        <p id="sepp-amount" class="value">$0.00</p>
+                        <span class="label">Amortization (5% Floor)</span>
+                    </div>
+                    
+                    <div class="card summary-card">
+                        <h3>SEPP Summary (to Age 59.5)</h3>
+                        <div class="stat"><span>Total Withdrawn:</span> <span id="total-sepp-withdrawn" class="stat-value">$0</span></div>
+                        <div class="stat"><span>Total Taxes Paid:</span> <span id="total-sepp-taxes" class="stat-value text-danger">$0</span></div>
+                        <div class="stat"><span>Net Withdrawn:</span> <span id="net-sepp-withdrawn" class="stat-value text-success">$0</span></div> <div class="stat"><span>Ending Balance:</span> <span id="final-sepp-balance" class="stat-value text-success">$0</span></div>
+                        <div class="stat"><span>Penalty Saved:</span> <span id="summary-penalty-saved" class="stat-value text-success">$0</span></div>
+                    </div>
+
+                    <div class="card summary-card danger-border">
+                        <h3>Lump Sum (1040-NR NRA)</h3>
+                        <div class="stat"><span>10% Penalty:</span> <span id="lump-sum-penalty" class="stat-value text-danger">$0</span></div>
+                        <div class="stat"><span>Taxes (<span id="tax-percent-display">0</span>%):</span> <span id="lump-sum-taxes" class="stat-value text-danger">$0</span></div>
+                        <div class="stat"><span>Final Net:</span> <span id="lump-sum-final-net" class="stat-value">$0</span></div>
+                    </div>
                 </div>
-                <div class="card result-card">
-                    <h3>Penalty Saved</h3>
-                    <p id="penalty-saved" class="value text-success">$0.00</p>
-                    <span class="label">vs. Lump Sum</span>
-                </div>
-                <div class="card result-card danger">
-                    <h3>Lump Sum Net</h3>
-                    <p id="lump-sum-net" class="value text-danger">$0.00</p>
-                    <span class="label">After Taxes & Penalties</span>
+
+                <div class="card table-card">
+                    <h2>The Journey: Year-by-Year Forecast</h2>
+                    <div class="table-container">
+                        <table id="adventure-table">
+                            <thead>
+                                <tr>
+                                    <th>Year</th><th>Age</th><th>Status</th><th>Start Balance</th><th>Growth</th>
+                                    <th>SEPP ($)</th><th>Tax %</th><th>Tax ($)</th><th>End Balance</th><th>Net (Mo)</th>
+                                    <th></th> </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
-        </main>
+        </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

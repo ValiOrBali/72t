@@ -1,69 +1,110 @@
-// Initialize Pyodide and the Python environment
-async function main() {
-    // 1. Load the Pyodide engine
-    let pyodide = await loadPyodide();
-    
-    // 2. Load the financial library for the PMT calculation
-    await pyodide.loadPackage("numpy-financial");
+const LIFE_TABLE = { 30: 55.3, 31: 54.4, 32: 53.4, 33: 52.5, 34: 51.5, 35: 50.5, 40: 45.7, 45: 41.0, 50: 36.2, 55: 31.6, 60: 27.1 };
 
-    // 3. Define the Python Logic as a string
-    const pythonCode = `
-import numpy_financial as npf
-
-def calculate_sepp(balance, age, country, is_citizen):
-    # IRS Single Life Expectancy Table (Notice 2022-6)
-    life_expectancy_table = {
-        30: 55.3, 35: 50.5, 40: 45.7, 45: 41.0, 50: 36.2, 55: 31.6, 60: 27.1
-    }
-    
-    # Get expectancy (default to 41.0 if age not in list)
-    n = life_expectancy_table.get(age, 41.0)
-    
-    # Use 5% interest floor per IRS rules
-    r = 0.05 
-    
-    # Calculate Amortization
-    annual_gross = abs(npf.pmt(r, n, balance))
-    
-    # Calculate Tax
-    # Treaty rates: India 15%, UK 0%, Others/Dubai/Singapore 30%
-    treaty_rates = {"India": 0.15, "UK": 0.00, "Singapore": 0.30, "Dubai": 0.30}
-    rate = treaty_rates.get(country, 0.30)
-    
-    if is_citizen:
-        taxable = max(0, annual_gross - 16100) # 2026 Std Deduction
-        tax = taxable * 0.11 # Avg effective rate
-    else:
-        tax = annual_gross * rate # Flat NRA tax
-        
-    penalty_saved = balance * 0.10
-    lump_sum_net = balance * (1 - (rate + 0.10))
-    
-    return [round(annual_gross, 2), round(penalty_saved, 2), round(lump_sum_net, 2)]
-    `;
-
-    // 4. Register the code in the Python namespace
-    pyodide.runPython(pythonCode);
-
-    // 5. Connect the HTML Button to the Python Function
-    document.querySelector('.btn-calculate').addEventListener('click', () => {
-        // Collect data from HTML form
-        const balance = parseFloat(document.getElementById('balance').value) || 0;
-        const age = parseInt(document.getElementById('age').value) || 45;
-        const country = document.getElementById('country').value;
-        const isCitizen = document.getElementById('citizen').value === 'citizen';
-
-        // Execute Python function and convert results to JS Array
-        const results = pyodide.globals.get('calculate_sepp')(balance, age, country, isCitizen).toJs();
-
-        // Update the UI cards
-        document.getElementById('sepp-amount').innerText = "$" + results[0].toLocaleString();
-        document.getElementById('penalty-saved').innerText = "$" + results[1].toLocaleString();
-        document.getElementById('lump-sum-net').innerText = "$" + results[2].toLocaleString();
-    });
-    
-    console.log("Python 72(t) Engine Ready!");
+function calculatePMT(rate, nper, pv) {
+    if (rate === 0) return pv / nper;
+    return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 }
 
-// Run the main loader
-main();
+// NEW: Update defaults based on destination
+function updateDestinationDefaults() {
+    const country = document.getElementById('country').value;
+    const symbolInput = document.getElementById('currency-symbol');
+    const exchangeInput = document.getElementById('base-exchange');
+    const devalInput = document.getElementById('devaluation-rate');
+
+    const defaults = {
+        "India": { sym: "₹", exch: 84.00, deval: 2 },
+        "Singapore": { sym: "S$", exch: 1.34, deval: 0 },
+        "Dubai": { sym: "AED", exch: 3.67, deval: 0 },
+        "UK": { sym: "£", exch: 0.79, deval: -1 } // Negative for appreciation
+    };
+
+    const data = defaults[country];
+    if (data) {
+        symbolInput.value = data.sym;
+        exchangeInput.value = data.exch;
+        devalInput.value = data.deval;
+    }
+    runCalculations();
+}
+
+function toggleStateInputs() {
+    const status = document.getElementById('status').value;
+    const groups = [document.getElementById('state-name-group'), document.getElementById('state-tax-group')];
+    groups.forEach(g => status === 'nra' ? g.classList.add('disabled') : g.classList.remove('disabled'));
+}
+
+function runCalculations() {
+    const balance = Math.round(parseFloat(document.getElementById('balance').value)) || 0;
+    const startAge = parseInt(document.getElementById('age').value) || 40;
+    const status = document.getElementById('status').value;
+    const country = document.getElementById('country').value;
+    const growthInput = parseFloat(document.getElementById('growth-rate').value) / 100 || 0;
+    const stateTaxRate = (status === 'citizen') ? (parseFloat(document.getElementById('state-tax').value) / 100 || 0) : 0;
+    const sym = document.getElementById('currency-symbol').value;
+    const exchBase = parseFloat(document.getElementById('base-exchange').value) || 1;
+    const deval = parseFloat(document.getElementById('devaluation-rate').value) / 100 || 0;
+
+    const treatyRate = { "India": 0.15, "Singapore": 0.30, "Dubai": 0.30, "UK": 0.00 }[country] || 0.30;
+    const lumpPenalty = Math.round(balance * 0.1);
+    const lumpTax = Math.round(balance * (treatyRate + stateTaxRate));
+    
+    document.getElementById('tax-percent-display').innerText = ((treatyRate + stateTaxRate) * 100).toFixed(1);
+    document.getElementById('lump-sum-penalty').innerText = "-$" + lumpPenalty.toLocaleString();
+    document.getElementById('lump-sum-taxes').innerText = "-$" + lumpTax.toLocaleString();
+    document.getElementById('lump-sum-final-net').innerText = "$" + (balance - lumpPenalty - lumpTax).toLocaleString();
+
+    const nper = LIFE_TABLE[startAge] || (82.0 - startAge);
+    const annualSEPP = Math.round(calculatePMT(0.05, nper, balance));
+    document.getElementById('sepp-amount').innerText = "$" + annualSEPP.toLocaleString();
+
+    const tbody = document.querySelector('#adventure-table tbody');
+    tbody.innerHTML = '';
+    let currentBalance = balance;
+    let totalTaxesPaid = 0;
+    let totalWithdrawn = 0;
+
+    for (let age = startAge; age <= 59; age++) {
+        const growthAmt = Math.round(currentBalance * growthInput);
+        const fedStep = (age - startAge < 3) ? 0.18 : 0.27;
+        const totalTaxRate = fedStep + stateTaxRate;
+        const taxPaidYearly = Math.round(annualSEPP * totalTaxRate);
+        const endYearBalance = currentBalance + growthAmt - annualSEPP;
+        
+        totalTaxesPaid += taxPaidYearly;
+        totalWithdrawn += annualSEPP;
+
+        let localStatus = "Resident";
+        if (country === "India") localStatus = (age - startAge < 3) ? "RNOR" : "ROR";
+
+        // Local Currency logic using dynamic symbol and exchange/devaluation
+        const currentExch = exchBase * Math.pow(1 + deval, age - startAge);
+        const netMo = Math.round(((annualSEPP - taxPaidYearly) / 12) * currentExch);
+
+        tbody.innerHTML += `<tr>
+            <td>${2026 + (age - startAge)}</td><td>${age === 59 ? "59.5" : age}</td>
+            <td class="status-cell">${localStatus}</td>
+            <td>$${currentBalance.toLocaleString()}</td><td>$${growthAmt.toLocaleString()}</td>
+            <td>$${annualSEPP.toLocaleString()}</td><td>${(totalTaxRate * 100).toFixed(1)}%</td>
+            <td class="text-danger">$${taxPaidYearly.toLocaleString()}</td>
+            <td>$${endYearBalance.toLocaleString()}</td><td>${sym}${netMo.toLocaleString()}</td>
+            <td></td>
+        </tr>`;
+        currentBalance = endYearBalance;
+    }
+
+    // UPDATED SUMMARY: Include Net Withdrawn
+    document.getElementById('total-sepp-withdrawn').innerText = "$" + totalWithdrawn.toLocaleString();
+    document.getElementById('total-sepp-taxes').innerText = "$" + totalTaxesPaid.toLocaleString();
+    document.getElementById('net-sepp-withdrawn').innerText = "$" + (totalWithdrawn - totalTaxesPaid).toLocaleString();
+    document.getElementById('final-sepp-balance').innerText = "$" + currentBalance.toLocaleString();
+    document.getElementById('summary-penalty-saved').innerText = "$" + lumpPenalty.toLocaleString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('status').addEventListener('change', () => { toggleStateInputs(); runCalculations(); });
+    document.getElementById('country').addEventListener('change', updateDestinationDefaults); // AUTO-SWITCH SYMBOLS
+    document.getElementById('btn-calculate').addEventListener('click', runCalculations);
+    toggleStateInputs();
+    runCalculations();
+});
