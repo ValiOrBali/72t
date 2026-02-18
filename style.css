@@ -29,11 +29,13 @@ body {
     background: var(--card-bg);
     padding: 24px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     margin-top: 0;
     color: #1a2b3c;
 }
@@ -116,7 +118,8 @@ label {
     color: #444;
 }
 
-input, select {
+input,
+select {
     width: 100%;
     padding: 10px;
     border: 1px solid #d1d9e0;
@@ -159,7 +162,8 @@ input, select {
 
 .result-card {
     border-top: 4px solid #3fa2f6;
-    background-color: #f1f6fa; /* Annual SEPP Specific Color */
+    background-color: #f1f6fa;
+    /* Annual SEPP Specific Color */
 }
 
 .summary-pane {
@@ -167,7 +171,8 @@ input, select {
     border-top: 4px solid #e2e8f0;
 }
 
-.lump-pane, .danger-border {
+.lump-pane,
+.danger-border {
     border-top: 4px solid var(--danger);
     background-color: white;
 }
@@ -204,52 +209,117 @@ input, select {
     color: var(--success) !important;
 }
 
-.table-container { overflow-x: auto; width: 100%; }
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    table-layout: auto; /* Changed to auto to allow columns to shrink */
+.table-container {
+    overflow-x: auto;
+    width: 100%;
 }
-th, td { 
-    padding: 12px 8px; 
-    border-bottom: 1px solid #eee; 
-    font-size: 0.82rem; 
-    white-space: nowrap; 
-    text-align: right; /* Aligns headers and numbers vertically */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    /* Changed to auto to allow columns to shrink */
 }
-th { background: #f9f9f9; font-weight: 600; color: #666; }
+
+th,
+td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    text-align: right;
+    /* Aligns headers and numbers vertically */
+}
+
+th {
+    background: #f9f9f9;
+    font-weight: 600;
+    color: #666;
+}
 
 /* Removes excessive gaps by allowing columns to fit their content */
-#adventure-table th, #adventure-table td {
-    padding: 8px 4px; /* Reduced padding to save space */
+#adventure-table th,
+#adventure-table td {
+    padding: 8px 4px;
+    /* Reduced padding to save space */
     text-align: right;
-    width: auto; /* Allows browser to determine best fit */
+    width: auto;
+    /* Allows browser to determine best fit */
 }
 
 /* Specific alignments and small-width columns */
-#adventure-table th:nth-child(1), #adventure-table td:nth-child(1) { width: 10%; text-align: center; } /* Year */
-#adventure-table th:nth-child(2), #adventure-table td:nth-child(2) { width: 8%; text-align: center; }  /* Age */
-#adventure-table th:nth-child(3), #adventure-table td:nth-child(3) { width: 12%; text-align: left; }   /* Status */
+#adventure-table th:nth-child(1),
+#adventure-table td:nth-child(1) {
+    width: 10%;
+    text-align: center;
+}
+
+/* Year */
+#adventure-table th:nth-child(2),
+#adventure-table td:nth-child(2) {
+    width: 8%;
+    text-align: center;
+}
+
+/* Age */
+#adventure-table th:nth-child(3),
+#adventure-table td:nth-child(3) {
+    width: 12%;
+    text-align: left;
+}
+
+/* Status */
 
 /* The rest of the columns will now naturally sit closer together */
-#adventure-table th:nth-child(4), #adventure-table td:nth-child(4) { width: 125px; } 
-#adventure-table th:nth-child(5), #adventure-table td:nth-child(5) { width: 105px; } 
-#adventure-table th:nth-child(6), #adventure-table td:nth-child(6) { width: 115px; } 
-#adventure-table th:nth-child(7), #adventure-table td:nth-child(7) { width: 85px; } 
-#adventure-table th:nth-child(8), #adventure-table td:nth-child(8) { width: 105px; } 
-#adventure-table th:nth-child(9), #adventure-table td:nth-child(9) { width: 145px; } 
-#adventure-table th:nth-child(10), #adventure-table td:nth-child(10) { width: 125px; }
+#adventure-table th:nth-child(4),
+#adventure-table td:nth-child(4) {
+    width: 125px;
+}
+
+#adventure-table th:nth-child(5),
+#adventure-table td:nth-child(5) {
+    width: 105px;
+}
+
+#adventure-table th:nth-child(6),
+#adventure-table td:nth-child(6) {
+    width: 115px;
+}
+
+#adventure-table th:nth-child(7),
+#adventure-table td:nth-child(7) {
+    width: 85px;
+}
+
+#adventure-table th:nth-child(8),
+#adventure-table td:nth-child(8) {
+    width: 105px;
+}
+
+#adventure-table th:nth-child(9),
+#adventure-table td:nth-child(9) {
+    width: 145px;
+}
+
+#adventure-table th:nth-child(10),
+#adventure-table td:nth-child(10) {
+    width: 125px;
+}
 
 /* End Balance Highlight */
-#adventure-table th:nth-child(9), #adventure-table td:nth-child(9) { 
-    width: 130px; 
-    background-color: #f0fff4; 
-    color: #2f855a; 
-    font-weight: 700; 
+#adventure-table th:nth-child(9),
+#adventure-table td:nth-child(9) {
+    width: 130px;
+    background-color: #f0fff4;
+    color: #2f855a;
+    font-weight: 700;
     padding-right: 15px;
 }
 
-#adventure-table th:nth-child(10), #adventure-table td:nth-child(10) { width: 115px; }
+#adventure-table th:nth-child(10),
+#adventure-table td:nth-child(10) {
+    width: 115px;
+}
 
 /* --- Tooltip Styling --- */
 .tooltip {
@@ -272,7 +342,7 @@ th { background: #f9f9f9; font-weight: 600; color: #666; }
     padding: 10px;
     position: absolute;
     z-index: 99;
-    bottom: 125%; 
+    bottom: 125%;
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
@@ -280,7 +350,7 @@ th { background: #f9f9f9; font-weight: 600; color: #666; }
     font-size: 0.75rem;
     font-weight: normal;
     line-height: 1.4;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     white-space: normal;
 }
 
@@ -305,16 +375,20 @@ th { background: #f9f9f9; font-weight: 600; color: #666; }
     .dashboard {
         flex-direction: column;
     }
+
     .sidebar {
         width: 100%;
     }
-    .results-grid, .methods-explanation {
+
+    .results-grid,
+    .methods-explanation {
         grid-template-columns: 1fr;
     }
 }
 
 /* --- Mobile Adjustments (Applied only to screens smaller than 1024px) --- */
 @media (max-width: 1024px) {
+
     /* 1. Stacks the Sidebar on top of the Results instead of side-by-side */
     .dashboard {
         flex-direction: column !important;
@@ -341,13 +415,16 @@ th { background: #f9f9f9; font-weight: 600; color: #666; }
         font-size: 2.2rem !important;
     }
 
-/* Inside @media (max-width: 1024px) */
-.table-container {
-    overflow-x: hidden; /* Removes the scroll */
-}
+    /* Inside @media (max-width: 1024px) */
+    .table-container {
+        overflow-x: hidden;
+        /* Removes the scroll */
+    }
 
-table {
-    min-width: 100% !important; /* Forces table to fit screen width */
-    font-size: 0.7rem; /* Shrinks text slightly to ensure no overlap */
-}
+    table {
+        min-width: 100% !important;
+        /* Forces table to fit screen width */
+        font-size: 0.7rem;
+        /* Shrinks text slightly to ensure no overlap */
+    }
 }

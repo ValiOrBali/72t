@@ -8,10 +8,10 @@ function calculatePMT(rate, nper, pv) {
 function updateDefaults() {
     const country = document.getElementById('country').value;
     const defaults = {
-        "India": { sym: "₹", exch: 84.00, deval: 2, growth: 7 },
-        "Singapore": { sym: "S$", exch: 1.30, deval: 0, growth: 6 },
-        "Dubai": { sym: "AED", exch: 3.60, deval: 0, growth: 5 },
-        "UK": { sym: "£", exch: 0.79, deval: 0, growth: 6 }
+        "India": { sym: "₹", exch: 84.00, deval: 2, growth: 7, treaty: 0.15, local: 0.00 },
+        "Singapore": { sym: "S$", exch: 1.34, deval: 0, growth: 6, treaty: 0.30, local: 0.00 },
+        "Dubai": { sym: "AED", exch: 3.67, deval: 0, growth: 5, treaty: 0.30, local: 0.00 },
+        "UK": { sym: "£", exch: 0.79, deval: 0, growth: 6, treaty: 0.00, local: 0.20 }
     };
     const data = defaults[country];
     if (data) {
@@ -19,6 +19,8 @@ function updateDefaults() {
         document.getElementById('base-exchange').value = data.exch;
         document.getElementById('devaluation-rate').value = data.deval;
         document.getElementById('growth-rate').value = data.growth;
+        // Hidden or global variables to store the rates for the loop
+        window.currentTreatyRate = data.treaty;
     }
 }
 
@@ -41,8 +43,9 @@ function runCalculations(e) {
     document.getElementById('results-area').style.display = 'block';
 
     // 1. Lump Sum Population Fix
-    const treatyRate = { "India": 0.15, "Singapore": 0.30, "Dubai": 0.30, "UK": 0.00 }[country] || 0.30;
-    const totalLumpTaxRate = treatyRate + stateTaxRate;
+    const treatyRates = { "India": 0.15, "Singapore": 0.30, "Dubai": 0.30, "UK": 0.00 };
+    const selectedTreaty = treatyRates[country] || 0.30;
+    const totalLumpTaxRate = selectedTreaty + stateTaxRate;
     const lumpPenalty = Math.round(balance * 0.1);
     const lumpTaxValue = Math.round(balance * totalLumpTaxRate);
     const lumpNetValue = balance - lumpPenalty - lumpTaxValue;
@@ -75,51 +78,73 @@ function runCalculations(e) {
     tbody.innerHTML = '';
 
     // 3. Forecast Table
-for (let age = startAge; age <= 59; age++) {
-    const nperCurrent = LIFE_TABLE[age] || (82.0 - age);
-    const yearlySEPP = (method === 'rmd') ? Math.round(currentBalance / nperCurrent) : seppYearOne;
-    
-    // NEW RESIDENCY LOGIC START
-    let localStatus = "Resident"; 
-    let statusDesc = "Standard Tax Residency."; // This will be your hover text
-    const yearsElapsed = age - startAge;
+    for (let age = startAge; age <= 59; age++) {
+        const nperCurrent = LIFE_TABLE[age] || (82.0 - age);
+        const yearlySEPP = (method === 'rmd') ? Math.round(currentBalance / nperCurrent) : seppYearOne;
 
-    switch (country) {
-        case "India":
-            const isRNOR = (yearsElapsed < 3);
-            localStatus = isRNOR ? "RNOR" : "ROR";
-            statusDesc = isRNOR ? "Resident but Not Ordinarily Resident: Foreign income (401k) is generally not taxable in India." : "Resident Ordinarily Resident: Worldwide income is taxable in India.";
-            break;
-        case "Singapore":
-            localStatus = "Resident";
-            statusDesc = "Singapore Tax Resident: Foreign-sourced income received in Singapore is generally tax-exempt.";
-            break;
-        case "Dubai":
-            localStatus = "Resident";
-            statusDesc = "UAE Tax Resident: No personal income tax on foreign or local income.";
-            break;
-        case "UK":
-            const isNonDom = (yearsElapsed < 7);
-            localStatus = isNonDom ? "Non-Dom" : "Resident";
-            statusDesc = isNonDom ? "Remittance Basis: Only foreign income brought into the UK is taxed." : "Arising Basis: Worldwide income is subject to UK tax.";
-            break;
-        default:
-            localStatus = "Resident";
-            statusDesc = "Standard Residency Status.";
-    }
-    // NEW RESIDENCY LOGIC END
+        // NEW RESIDENCY LOGIC START
+        let localStatus = "Resident";
+        let statusDesc = "Standard Tax Residency."; // This will be your hover text
+        const yearsElapsed = age - startAge;
+
+        switch (country) {
+            case "India":
+                const isRNOR = (yearsElapsed < 3);
+                localStatus = isRNOR ? "RNOR" : "ROR";
+                statusDesc = isRNOR ? "Resident but Not Ordinarily Resident: Foreign income (401k) is generally not taxable in India." : "Resident Ordinarily Resident: Worldwide income is taxable in India.";
+                break;
+            case "Singapore":
+                localStatus = "Resident";
+                statusDesc = "Singapore Tax Resident: Foreign-sourced income received in Singapore is generally tax-exempt.";
+                break;
+            case "Dubai":
+                localStatus = "Resident";
+                statusDesc = "UAE Tax Resident: No personal income tax on foreign or local income.";
+                break;
+            case "UK":
+                const isNonDom = (yearsElapsed < 7);
+                localStatus = isNonDom ? "Non-Dom" : "Resident";
+                statusDesc = isNonDom ? "Remittance Basis: Only foreign income brought into the UK is taxed." : "Arising Basis: Worldwide income is subject to UK tax.";
+                break;
+            default:
+                localStatus = "Resident";
+                statusDesc = "Standard Residency Status.";
+        }
+
+        // Inside the for loop in script.js
+        let fedRate = 0.30; // Default US Backup Rate
+
+        switch (country) {
+            case "India":
+                // India: US taxes at 15% (Treaty) + India taxes 0% during RNOR
+                fedRate = (yearsElapsed < 3) ? 0.15 : 0.25;
+                break;
+            case "Singapore":
+                // Singapore: Generally 30% US tax; 0% Local on foreign-sourced income
+                fedRate = 0.30;
+                break;
+            case "Dubai":
+                // Dubai: 30% US tax; 0% Local tax
+                fedRate = 0.30;
+                break;
+            case "UK":
+                // UK: 0% US tax (Treaty); UK taxes on arising basis
+                fedRate = (yearsElapsed < 7) ? 0.00 : 0.20;
+                break;
+        }
+
+        // NEW RESIDENCY LOGIC END
         const growthAmt = Math.round(currentBalance * growthInput);
-        const fedRate = (age - startAge < 3 ? 0.18 : 0.27);
         const taxRate = fedRate + stateTaxRate;
         const taxYearly = Math.round(yearlySEPP * taxRate);
         const endBal = currentBalance + growthAmt - yearlySEPP;
         const currentExch = exchBase * Math.pow(1 + deval, age - startAge);
         const netMo = Math.round(((yearlySEPP - taxYearly) / 12) * currentExch);
 
-// Updated Table Row Injection in Section 3
-tbody.innerHTML += `<tr>
-    <td>${2026+yearsElapsed}</td>
-    <td>${age===59?"59.5":age}</td>
+        // Updated Table Row Injection in Section 3
+        tbody.innerHTML += `<tr>
+    <td>${2026 + yearsElapsed}</td>
+    <td>${age === 59 ? "59.5" : age}</td>
     <td style="text-align: left;">
         <div class="tooltip">${localStatus}
             <span class="tooltiptext">${statusDesc}</span>
@@ -127,13 +152,13 @@ tbody.innerHTML += `<tr>
     <td>$${currentBalance.toLocaleString()}</td>
     <td>$${growthAmt.toLocaleString()}</td>
     <td>$${yearlySEPP.toLocaleString()}</td>
-    <td>${(taxRate*100).toFixed(1)}%</td>
+    <td>${(taxRate * 100).toFixed(1)}%</td>
     <td class="text-danger">$${taxYearly.toLocaleString()}</td>
     <td style="color:var(--success); font-weight:bold;">$${endBal.toLocaleString()}</td>
     <td>${sym}${netMo.toLocaleString()}</td>
     <td></td>
 </tr>`;
-        
+
         totalWithdrawn += yearlySEPP;
         totalTaxesPaid += taxYearly;
         currentBalance = endBal;
@@ -157,17 +182,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const stateTaxInput = document.getElementById('state-tax');
 
     // 1. Auto-populate State Tax based on selection
-    stateSelect.addEventListener('change', function() {
+    stateSelect.addEventListener('change', function () {
         const selectedOption = this.options[this.selectedIndex];
         const taxRate = selectedOption.getAttribute('data-tax');
-        
+
         if (taxRate !== null) {
             stateTaxInput.value = taxRate;
         }
     });
 
     // 2. Updated NRA Logic to handle both fields
-    statusSelect.addEventListener('change', function() {
+    statusSelect.addEventListener('change', function () {
         const isNRA = (this.value === 'nra');
         const stateNameGroup = stateSelect.closest('.input-group');
         const stateTaxGroup = stateTaxInput.closest('.input-group');
