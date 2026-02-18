@@ -386,6 +386,56 @@ th {
     }
 }
 
+/* --- Roadmap Table Styling --- */
+.checklist-table-container {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    overflow: hidden;
+}
+
+.checklist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    table-layout: auto !important;
+}
+
+.checklist-table th {
+    background: #f8fafc;
+    color: #475569;
+    text-align: left !important;
+    padding: 12px 10px;
+    font-weight: 600;
+}
+
+.checklist-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    text-align: left !important;
+}
+
+.phase-header {
+    background-color: #f1f6fa;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.danger-zone-header {
+    background-color: #fff5f5;
+    color: #e74c3c;
+}
+
+.danger-row {
+    background-color: #fffafb;
+    font-weight: 500;
+}
+
 /* --- Mobile Adjustments (Applied only to screens smaller than 1024px) --- */
 @media (max-width: 1024px) {
 
