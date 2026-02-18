@@ -206,17 +206,26 @@ input, select {
 
 .table-container { overflow-x: auto; width: 100%; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { padding: 10px 5px; border-bottom: 1px solid #eee; font-size: 0.8rem; white-space: nowrap; }
+th, td { 
+    padding: 12px 8px; 
+    border-bottom: 1px solid #eee; 
+    font-size: 0.82rem; 
+    white-space: nowrap; 
+    text-align: right; /* Aligns headers and numbers vertically */
+}
 th { background: #f9f9f9; font-weight: 600; color: #666; }
 
-/* Specific Column Styling */
-#adventure-table th:nth-child(1), #adventure-table td:nth-child(1) { width: 60px; text-align: center; } 
-#adventure-table th:nth-child(2), #adventure-table td:nth-child(2) { width: 50px; text-align: center; } 
-#adventure-table th:nth-child(3), #adventure-table td:nth-child(3) { 
-    width: 80px; 
-    text-align: left; 
-    overflow: visible; 
-} 
+/* Rigidly defines widths so columns don't overlap on mobile */
+#adventure-table th:nth-child(1), #adventure-table td:nth-child(1) { width: 65px; text-align: center; } 
+#adventure-table th:nth-child(2), #adventure-table td:nth-child(2) { width: 55px; text-align: center; } 
+#adventure-table th:nth-child(3), #adventure-table td:nth-child(3) { width: 85px; text-align: left; } 
+#adventure-table th:nth-child(4), #adventure-table td:nth-child(4) { width: 125px; } 
+#adventure-table th:nth-child(5), #adventure-table td:nth-child(5) { width: 105px; } 
+#adventure-table th:nth-child(6), #adventure-table td:nth-child(6) { width: 115px; } 
+#adventure-table th:nth-child(7), #adventure-table td:nth-child(7) { width: 85px; } 
+#adventure-table th:nth-child(8), #adventure-table td:nth-child(8) { width: 105px; } 
+#adventure-table th:nth-child(9), #adventure-table td:nth-child(9) { width: 145px; } 
+#adventure-table th:nth-child(10), #adventure-table td:nth-child(10) { width: 125px; }
 
 /* End Balance Highlight */
 #adventure-table th:nth-child(9), #adventure-table td:nth-child(9) { 
@@ -319,14 +328,16 @@ th { background: #f9f9f9; font-weight: 600; color: #666; }
         font-size: 2.2rem !important;
     }
 
-    /* 6. Enables horizontal swiping for the table so columns don't overlap */
     .table-container {
         overflow-x: auto !important;
+        padding-top: 50px; /* Space for tooltip hover pop-up */
         -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
     }
 
-    /* 7. Keeps the table wide enough to be readable while swiping */
     table {
-        min-width: 900px !important;
+        min-width: 1050px !important; /* Prevents columns from overlapping */
+        table-layout: fixed;
     }
 }
